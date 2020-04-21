@@ -1,2 +1,3 @@
-```npm install```
-```npm run dev```
+### run project
+```npm install
+npm run dev```
