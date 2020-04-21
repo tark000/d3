@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+}
+
+header {
+  position: fixed;
+  right: 0;
+  top: 0;
+  padding: 20px;
+  z-index: 100;
+  a {
+    margin: 10px;
+    cursor: pointer;
+  }
+}
