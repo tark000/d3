@@ -42,8 +42,8 @@ function jsTask(){
           // './node_modules/d3-quadtree/dist/d3-quadtree.min.js',
           // './node_modules/d3-timer/dist/d3-timer.min.js',
           // './node_modules/d3-force/dist/d3-force.min.js',
-
-          './lib/js/d3.v5.min.js',
+          './node_modules/d3/dist/d3.min.js',
+          // './lib/js/d3.v5.min.js',
           './lib/js/vis-network.min.js',
           files.jsPath,
         ])
