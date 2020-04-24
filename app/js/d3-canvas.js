@@ -21,8 +21,8 @@ if(document.getElementById("my-canvas")) {
       { country: "Yemen", radius: 20 },
       { country: "Solomon Islands", radius: 30 },
       { country: "Vietnam", radius: 30 },
-      { country: "Brazil", radius: 40 },
-      { country: "Taiwan", radius: 20 },
+      { country: "Brazil", radius: 40, color: 'yellow' },
+      { country: "Taiwan", radius: 20, color: 'red' },
     ],
     links: [
       { source: "Canada", target: "Yemen", distance: 190, value: 1 },
@@ -83,9 +83,11 @@ if(document.getElementById("my-canvas")) {
         graph.nodes.forEach(function(d, i) {
 
             ctx.beginPath();
-            ctx.arc(d.x, d.y, radius, 0, 2 * Math.PI, true);
-            ctx.fillStyle = d.col ? "red":"black"
+            ctx.arc(d.x, d.y, d.radius, 0, 2 * Math.PI, true);
+            ctx.fillStyle = d.color ? d.color:"#fff"
             ctx.fill();
+            ctx.strokeStyle = '#aaa';
+            ctx.stroke();
         });
 
         ctx.restore();
@@ -202,7 +204,7 @@ if(document.getElementById("my-canvas")) {
       dx = x - node.x;
       dy = y - node.y;
 
-      if (dx * dx + dy * dy < radius * radius) {
+      if (dx * dx + dy * dy < node.radius * node.radius) {
 
         node.x =  transform.applyX(node.x);
         node.y = transform.applyY(node.y);
