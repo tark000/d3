@@ -9,10 +9,23 @@ if(document.getElementById("my-graf")) {
     nodeBorder: "#000",
     nodeRadius: "50",
     nodeBorderColor: "#aaa",
+    nodeBorderWidth: 2,
     nodeFont: "bold 12px serif",
     nodeFontColor: "black",
 
-    linkColor: "#333"
+    linkColor: "#333",
+
+    // more info block
+    infoX: 0,
+    infoY: 20,
+    infoColor: 'red',
+    nodeinfoBorderWidth: 1,
+    nodeinfoBackground: "#fff",
+
+
+
+    modalWidth: 500,
+    modalHeight: 200
   }
 
 
@@ -74,6 +87,7 @@ if(document.getElementById("my-graf")) {
       ctx.rect(node.x - node.width/2, node.y - node.height/2, node.width, node.height);
       ctx.fillStyle = node.color ? node.color : settings.nodeColor;
       ctx.fill();
+      ctx.lineWidth = settings.nodeBorderWidth;
       ctx.strokeStyle = settings.nodeBorderColor;
       ctx.stroke();
     } else {
@@ -82,6 +96,7 @@ if(document.getElementById("my-graf")) {
       ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
       ctx.fillStyle = node.color ? node.color:settings.nodeColor;
       ctx.fill();
+      ctx.lineWidth = settings.nodeBorderWidth;
       ctx.strokeStyle = settings.nodeBorderColor;
       ctx.stroke();
     }
@@ -90,8 +105,21 @@ if(document.getElementById("my-graf")) {
     ctx.font = settings.nodeFont;
     ctx.fillStyle = settings.nodeFontColor;
     ctx.textAlign = "center";
-
     ctx.fillText(node.country, node.x ,node.y);
+
+    // add more info
+    ctx.beginPath();
+    ctx.arc(node.x + settings.infoX , node.y + settings.infoY, 10, 0, 2 * Math.PI, true);
+    ctx.fillStyle = settings.nodeinfoBackground;
+    ctx.fill();
+    ctx.lineWidth = settings.nodeinfoBorderWidth;
+    ctx.strokeStyle = settings.infoColor;
+    ctx.stroke();
+
+    ctx.font = settings.nodeFont;
+    ctx.fillStyle = settings.infoColor;
+    ctx.textAlign = "center";
+    ctx.fillText('i', node.x + settings.infoX , node.y + settings.infoY + height/2);
   }
 
   let drawLink = (link, i) => {
@@ -116,11 +144,23 @@ if(document.getElementById("my-graf")) {
   let dbclick = () => {
     const node = getSubject ();
     if (!node) return;
-    const description = node.description;
-    if (description) {
-      modal.style.display = "block";
-      modalContent.innerHTML = '<h2>' + node.country + '</h2><p>' + node.description+ '</p>';
+    if (node.description) {
+      showModal(node)
     }
+  }
+
+  let showModal = (node) => {
+    modal.style.display = "block";
+    let x = transform.applyX(node.x);
+    let y = transform.applyY(node.y);
+    let left = x - settings.modalWidth/2 > 0 ? x - settings.modalWidth/2 : 0;
+    let top = y - settings.modalHeight/2 > 0 ? y - settings.modalHeight/2 : 0;
+    let content = document.querySelector('.modal-content');
+    content.style.left = left + 'px';
+    content.style.top = top + 'px';
+    content.style.width = settings.modalWidth + 'px';
+    content.style.height = settings.modalHeight + 'px';
+    modalContent.innerHTML = '<h2>' + node.country + '</h2><p>' + node.description+ '</p>';
   }
 
   let getSubject = () => {
@@ -133,6 +173,12 @@ if(document.getElementById("my-graf")) {
       node = graph.nodes[i];
       dx = x - node.x;
       dy = y - node.y;
+      ix = dx - settings.infoX;
+      iy = dy - settings.infoY;
+      if ((ix * ix + iy * iy < 100)) {
+        showModal(node)
+        return false;
+      }
       if (node.type == "rectangle") {
         if (dx * dx < node.width/2 * node.width/2 && dy * dy < node.height/2 * node.height/2 ) {
           return node;
