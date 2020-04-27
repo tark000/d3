@@ -31,12 +31,12 @@ if(document.getElementById("my-graf")) {
 
   let graph = {
     nodes: [
-      { country: "Canada", description: "Long text Canada" , width: 100, height: 50, x: 1000, y: 100, type: "rectangle"},
-      { country: "Yemen", description: "Long text Yemen", x: 100, y: 70 },
-      { country: "Solomon Islands", description: "Long text Solomon Islands", radius: 30 , x: 300, y: 100},
-      { country: "Vietnam", description: "Long text Vietnam", radius: 30, x: 200, y: 500 },
-      { country: "Brazil", description: "Long text Brazil", radius: 40, color: 'yellow', x: 100, y: 250 },
-      { country: "Taiwan", description: "Long text Taiwan", radius: 20, color: 'red', x: 1500, y: 400 },
+      { country: "Canada", description: "Long text Canada <a href='/'>home page</a>" , width: 100, height: 50, x: 1000, y: 100, type: "rectangle"},
+      { country: "Yemen", description: "Long text Yemen <h2>some text</h2>", x: 100, y: 70 },
+      { country: "Solomon Islands", description: "Long text Solomon Islands <h2>some text</h2>", radius: 30 , x: 300, y: 100},
+      { country: "Vietnam", description: "Long text Vietnam <h2>some text</h2>", radius: 30, x: 200, y: 500 },
+      { country: "Brazil", description: "Long text Brazil <h2>some text</h2>", radius: 40, color: 'yellow', x: 100, y: 250 },
+      { country: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", radius: 20, color: 'red', x: 1500, y: 400 },
     ],
     links: [
       { source: "Canada", target: "Yemen", distance: 190, value: 1 },
@@ -246,9 +246,6 @@ if(document.getElementById("my-graf")) {
       .on("dblclick", dbclick)
     .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed))
     .on("dblclick.zoom", null);
-
-
-
 
 
 
