@@ -49,7 +49,9 @@ if(document.getElementById("my-graf")) {
 
   let update = () => {
     // console.log('update');
+
     ctx.save();
+
     ctx.clearRect(0, 0, settings.canvasWidth, settings.canvasHeight);
     ctx.translate(transform.x, transform.y);
     ctx.scale(transform.k, transform.k);
@@ -105,28 +107,13 @@ if(document.getElementById("my-graf")) {
   }
 
   let getNode = (link) => graph.nodes.find(node=> node.country === link)
-
-  update();
-
-  canvas
-    .call(d3.drag()
-      .subject(dragsubject)
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended))
-      .on("dblclick", dbclick)
-    .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed))
-    .on("dblclick.zoom", null);
-
-
-
   // zoom
-  function zoomed() {
+  let zoomed = () => {
     transform = d3.event.transform;
     update();
   }
 
-  function dbclick() {
+  let dbclick = () => {
     const node = getSubject ();
     if (!node) return;
     const description = node.description;
@@ -136,7 +123,7 @@ if(document.getElementById("my-graf")) {
     }
   }
 
-  function getSubject () {
+  let getSubject = () => {
     var i,
     x = transform.invertX(d3.event.x),
     y = transform.invertY(d3.event.y),
@@ -159,7 +146,7 @@ if(document.getElementById("my-graf")) {
     }
   }
 
-  function dragsubject() {
+  let dragsubject = ()=> {
     let node = getSubject ();
     if(node) {
       node.x =  transform.applyX(node.x);
@@ -186,21 +173,36 @@ if(document.getElementById("my-graf")) {
   }
 
 
-  function dragstarted() {
+  let  dragstarted = () => {
     d3.event.subject.active = true;
     d3.event.subject.x = transform.invertX(d3.event.x);
     d3.event.subject.y = transform.invertY(d3.event.y);
   }
 
-  function dragged() {
+  let  dragged = () => {
     d3.event.subject.x = transform.invertX(d3.event.x);
     d3.event.subject.y = transform.invertY(d3.event.y);
     update();
   }
 
-  function dragended() {
+  let dragended = () => {
     d3.event.subject.active = false;
   }
+
+  update();
+
+  canvas
+    .call(d3.drag()
+      .subject(dragsubject)
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended))
+      .on("dblclick", dbclick)
+    .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed))
+    .on("dblclick.zoom", null);
+
+
+
 
 
 
