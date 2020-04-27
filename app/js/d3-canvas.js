@@ -1,4 +1,13 @@
 if(document.getElementById("my-canvas")) {
+
+  let graphSettings = {
+    nodeColor: "#fff",
+    nodeBorder: "#000",
+    nodeRadius: "50",
+    linkColor: "#333"
+  };
+
+
   // set canvas
   let width = +document.querySelector('section').offsetWidth;
   let height = +document.querySelector('section').offsetHeight;
@@ -18,7 +27,7 @@ if(document.getElementById("my-canvas")) {
   let graph = {
     nodes: [
       { country: "Canada" , radius: 10},
-      { country: "Yemen", radius: 20 },
+      { country: "Yemen" },
       { country: "Solomon Islands", radius: 30 },
       { country: "Vietnam", radius: 30 },
       { country: "Brazil", radius: 40, color: 'yellow' },
@@ -52,45 +61,41 @@ if(document.getElementById("my-canvas")) {
     ctx.lineTo(link.target.x, link.target.y);
   }
   let update = () => {
-    // console.log('update', transform, new Date());
-    // ctx.clearRect(0, 0, width, height);
-    //
-    //
-    // ctx.globalAlpha = 1;
-    // graph.nodes.forEach(drawNode);
-    //
-    // ctx.beginPath();
-    // ctx.globalAlpha = 0.3;
-    // ctx.strokeStyle = '#aaa';
-    // graph.links.forEach(drawLink);
-    // ctx.stroke();
-
-
     ctx.save();
+    ctx.clearRect(0, 0, width, height);
+    ctx.translate(transform.x, transform.y);
+    ctx.scale(transform.k, transform.k);
 
-      ctx.clearRect(0, 0, width, height);
-      ctx.translate(transform.x, transform.y);
-      ctx.scale(transform.k, transform.k);
+    graph.links.forEach(function(d) {
+      ctx.beginPath();
+      ctx.moveTo(d.source.x, d.source.y);
+      ctx.lineTo(d.target.x, d.target.y);
+      ctx.stroke();
+    });
 
-      graph.links.forEach(function(d) {
-            ctx.beginPath();
-            ctx.moveTo(d.source.x, d.source.y);
-            ctx.lineTo(d.target.x, d.target.y);
-            ctx.stroke();
-        });
+      // Draw the nodes
+    graph.nodes.forEach(function(d, i) {
+      let width = ctx.measureText(d.country).width;
+      let height = ctx.measureText("w").width;
+      let nodeRadius = d.radius || graphSettings.nodeRadius;
+      let radius = nodeRadius < width/2 ? width/2 + 10 : nodeRadius;
+      // console.log(d.country, nodeRadius, width/2, radius);
 
-        // Draw the nodes
-        graph.nodes.forEach(function(d, i) {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, radius, 0, 2 * Math.PI, true);
+      ctx.fillStyle = d.color ? d.color:"#fff"
+      ctx.fill();
+      ctx.strokeStyle = '#aaa';
+      ctx.stroke();
 
-            ctx.beginPath();
-            ctx.arc(d.x, d.y, d.radius, 0, 2 * Math.PI, true);
-            ctx.fillStyle = d.color ? d.color:"#fff"
-            ctx.fill();
-            ctx.strokeStyle = '#aaa';
-            ctx.stroke();
-        });
+      // add text
+      ctx.font = "bold 12px serif";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
 
-        ctx.restore();
+      ctx.fillText(d.country, d.x ,d.y);
+    });
+    ctx.restore();
   };
 
   let simulation = d3
@@ -112,7 +117,10 @@ if(document.getElementById("my-canvas")) {
     )
     .alphaTarget(0)
     .alphaDecay(0.05)
-    .on('tick', update);
+    .on('tick', function() {
+      console.log(11111);
+      update();
+    });
 
   // Once simulation is executed, x, y, vy, vx will be added to nodes
   simulation
@@ -131,68 +139,6 @@ if(document.getElementById("my-canvas")) {
     return d.distance+30;
   }
 
-  // Make node draggable
-  // Ref: https://github.com/d3/d3-force
-  // Ref: https://bl.ocks.org/mbostock/ad70335eeef6d167bc36fd3c04378048
-  // Ref: https://www.youtube.com/watch?v=gda35eYXBJc
-  // let dragsubject = () => simulation.find(d3.event.x, d3.event.y);
-  // function dragsubject() {
-  //   var i,
-  //   x = transform.invertX(d3.event.x),
-  //   y = transform.invertY(d3.event.y),
-  //   dx,
-  //   dy;
-  //   for (i = simulation.length - 1; i >= 0; --i) {
-  //     node = simulation[i];
-  //     dx = x - node.x;
-  //     dy = y - node.y;
-  //     console.log('node1', node);
-  //     // console.log(node);
-  //     if (dx * dx + dy * dy < radius * radius) {
-  //       console.log('node', node);
-  //
-  //       node.x =  transform.applyX(node.x);
-  //       node.y = transform.applyY(node.y);
-  //
-  //       return node;
-  //     }
-  //   }
-  // }
-
-  // let dragstarted = () => {
-  //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-  //
-  //   d3.event.subject.fx = transform.invertX(d3.event.subject.x);
-  //   d3.event.subject.fy = transform.invertY(d3.event.subject.y);
-  //   console.log(d3.event.subject);
-  // }
-  // let dragged = () => {
-  //   d3.event.subject.fx = transform.invertX(d3.event.subject.x);
-  //   d3.event.subject.fy = transform.invertY(d3.event.subject.y);
-  // }
-  // let dragended = () => {
-  //   if (!d3.event.active) simulation.alphaTarget(0);
-  //   d3.event.subject.fx = null;
-  //   d3.event.subject.fy = null;
-  // }
-
-  // let dragsubject = () => simulation.find(d3.event.x, d3.event.y);
-  // let dragstarted = () => {
-  //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-  //   d3.event.subject.fx = d3.event.subject.x;
-  //   d3.event.subject.fy = d3.event.subject.y;
-  //   console.log(d3.event.subject);
-  // }
-  // let dragged = () => {
-  //   d3.event.subject.fx = d3.event.x;
-  //   d3.event.subject.fy = d3.event.y;
-  // }
-  // let dragended = () => {
-  //   if (!d3.event.active) simulation.alphaTarget(0);
-  //   d3.event.subject.fx = null;
-  //   d3.event.subject.fy = null;
-  // }
-
   function dragsubject() {
     var i,
     x = transform.invertX(d3.event.x),
@@ -203,11 +149,12 @@ if(document.getElementById("my-canvas")) {
       node = graph.nodes[i];
       dx = x - node.x;
       dy = y - node.y;
-
-      if (dx * dx + dy * dy < node.radius * node.radius) {
-
+      let radius = node.radius || graphSettings.nodeRadius;
+      if (dx * dx + dy * dy < radius * radius) {
+        console.log(node)
         node.x =  transform.applyX(node.x);
         node.y = transform.applyY(node.y);
+        console.log(node)
 
         return node;
       }
@@ -222,9 +169,13 @@ if(document.getElementById("my-canvas")) {
   }
 
   function dragged() {
+    console.log('transform.invertX(d3.event.x)', transform.invertX(d3.event.x))
+    console.log('d3.event.x', d3.event.x)
+    console.log('d3.event.subject', d3.event.subject.fx)
     d3.event.subject.fx = transform.invertX(d3.event.x);
     d3.event.subject.fy = transform.invertY(d3.event.y);
 
+    console.log('d3.event.subject', d3.event.subject.fx)
   }
 
   function dragended() {
@@ -243,18 +194,6 @@ if(document.getElementById("my-canvas")) {
       .call(d3.zoom().scaleExtent([0.3, 8]).on("zoom", zoomed));
 
   // zoom
-
-  // function zoom() {
-  //   console.log('zoom');
-  //   transform = d3.event.transform;
-  //   console.log(transform)
-  //   ctx.save();
-  //   ctx.clearRect(0, 0, width, height);
-  //   ctx.translate(transform.x, transform.y);
-  //   ctx.scale(transform.k, transform.k);
-  //   update();
-  //   ctx.restore();
-  // }
 
   function zoomed() {
       console.log("zooming")

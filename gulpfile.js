@@ -68,9 +68,9 @@ function watchTask(){
 function webserverTask(){
   gulp.src('./')
     .pipe(webserver({
-      livereload: true,
-      directoryListing: true,
-      open: true
+      // livereload: true,
+      // directoryListing: true,
+      // open: true
     }));
 }
 
