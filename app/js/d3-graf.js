@@ -18,7 +18,7 @@ if(document.getElementById("my-graf")) {
 
   let graph = {
     nodes: [
-      { country: "Canada", description: "Long text Canada" , radius: 10, x: 1000, y: 100},
+      { country: "Canada", description: "Long text Canada" , width: 100, height: 50, x: 1000, y: 100, type: "rectangle"},
       { country: "Yemen", description: "Long text Yemen", x: 100, y: 70 },
       { country: "Solomon Islands", description: "Long text Solomon Islands", radius: 30 , x: 300, y: 100},
       { country: "Vietnam", description: "Long text Vietnam", radius: 30, x: 200, y: 500 },
@@ -65,15 +65,24 @@ if(document.getElementById("my-graf")) {
     let width = ctx.measureText(node.country).width;
     let height = ctx.measureText("w").width;
     let nodeRadius = node.radius || settings.nodeRadius;
-    node.radius = nodeRadius < width/2 ? width/2 + 10 : nodeRadius;
+    node.radius = nodeRadius < width/2 ? (width/2 + 15) : nodeRadius;
     // console.log(node.country, nodeRadius, width/2, radius);
+    if (node.type === 'rectangle') {
+      ctx.beginPath();
+      ctx.rect(node.x - node.width/2, node.y - node.height/2, node.width, node.height);
+      ctx.fillStyle = node.color ? node.color : settings.nodeColor;
+      ctx.fill();
+      ctx.strokeStyle = settings.nodeBorderColor;
+      ctx.stroke();
+    } else {
 
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
-    ctx.fillStyle = node.color ? node.color:settings.nodeColor;
-    ctx.fill();
-    ctx.strokeStyle = settings.nodeBorderColor;
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
+      ctx.fillStyle = node.color ? node.color:settings.nodeColor;
+      ctx.fill();
+      ctx.strokeStyle = settings.nodeBorderColor;
+      ctx.stroke();
+    }
 
     // add text
     ctx.font = settings.nodeFont;
@@ -92,6 +101,41 @@ if(document.getElementById("my-graf")) {
     ctx.lineWidth = link.value;
     if (link.color) ctx.strokeStyle = link.color;
     ctx.stroke();
+    drawArrowhead(source, target, target.radius)
+
+  }
+
+  function drawArrowhead(from, to, radius, radius) {
+  	var x_center = to.x;
+  	var y_center = to.y;
+
+  	var angle;
+  	var x;
+  	var y;
+
+  	ctx.beginPath();
+
+  	angle = Math.atan2(to.y - from.y, to.x - from.x)
+  	x = radius * Math.cos(angle) + x_center;
+  	y = radius * Math.sin(angle) + y_center;
+
+  	ctx.moveTo(x, y);
+
+  	angle += (1.0/3.0) * (2 * Math.PI)
+  	x = radius * Math.cos(angle) + x_center;
+  	y = radius * Math.sin(angle) + y_center;
+
+  	ctx.lineTo(x, y);
+
+  	angle += (1.0/3.0) * (2 * Math.PI)
+  	x = radius *Math.cos(angle) + x_center;
+  	y = radius *Math.sin(angle) + y_center;
+
+  	ctx.lineTo(x, y);
+
+  	ctx.closePath();
+
+  	ctx.fill();
   }
 
   let getNode = (link) => graph.nodes.find(node=> node.country === link)
@@ -136,10 +180,15 @@ if(document.getElementById("my-graf")) {
       node = graph.nodes[i];
       dx = x - node.x;
       dy = y - node.y;
-      let radius = node.radius || settings.nodeRadius;
-      if (dx * dx + dy * dy < radius * radius) {
-
-        return node;
+      if (node.type == "rectangle") {
+        if (dx * dx < node.width/2 * node.width/2 && dy * dy < node.height/2 * node.height/2 ) {
+          return node;
+        }
+      }
+      else  {
+        if ((dx * dx + dy * dy < node.radius * node.radius)) {
+          return node;
+        }
       }
     }
   }
