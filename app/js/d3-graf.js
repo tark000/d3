@@ -8,6 +8,9 @@ if(document.getElementById("my-graf")) {
     nodeColor: "#fff",
     nodeBorder: "#000",
     nodeRadius: "50",
+    nodeBorderColor: "#aaa",
+    nodeFont: "bold 12px serif",
+    nodeFontColor: "black",
 
     linkColor: "#333"
   }
@@ -15,12 +18,12 @@ if(document.getElementById("my-graf")) {
 
   let graph = {
     nodes: [
-      { country: "Canada" , radius: 10, x: 1000, y: 100},
-      { country: "Yemen", x: 100, y: 0 },
-      { country: "Solomon Islands", radius: 30 , x: 150, y: 100},
-      { country: "Vietnam", radius: 30, x: 200, y: 500 },
-      { country: "Brazil", radius: 40, color: 'yellow', x: 100, y: 250 },
-      { country: "Taiwan", radius: 20, color: 'red', x: 1500, y: 400 },
+      { country: "Canada", description: "Long text Canada" , radius: 10, x: 1000, y: 100},
+      { country: "Yemen", description: "Long text Yemen", x: 100, y: 70 },
+      { country: "Solomon Islands", description: "Long text Solomon Islands", radius: 30 , x: 300, y: 100},
+      { country: "Vietnam", description: "Long text Vietnam", radius: 30, x: 200, y: 500 },
+      { country: "Brazil", description: "Long text Brazil", radius: 40, color: 'yellow', x: 100, y: 250 },
+      { country: "Taiwan", description: "Long text Taiwan", radius: 20, color: 'red', x: 1500, y: 400 },
     ],
     links: [
       { source: "Canada", target: "Yemen", distance: 190, value: 1 },
@@ -62,26 +65,25 @@ if(document.getElementById("my-graf")) {
     let width = ctx.measureText(node.country).width;
     let height = ctx.measureText("w").width;
     let nodeRadius = node.radius || settings.nodeRadius;
-    let radius = nodeRadius < width/2 ? width/2 + 10 : nodeRadius;
+    node.radius = nodeRadius < width/2 ? width/2 + 10 : nodeRadius;
     // console.log(node.country, nodeRadius, width/2, radius);
 
     ctx.beginPath();
-    ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, true);
-    ctx.fillStyle = node.color ? node.color:"#fff"
+    ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
+    ctx.fillStyle = node.color ? node.color:settings.nodeColor;
     ctx.fill();
-    ctx.strokeStyle = '#aaa';
+    ctx.strokeStyle = settings.nodeBorderColor;
     ctx.stroke();
 
     // add text
-    ctx.font = "bold 12px serif";
-    ctx.fillStyle = "black";
+    ctx.font = settings.nodeFont;
+    ctx.fillStyle = settings.nodeFontColor;
     ctx.textAlign = "center";
 
     ctx.fillText(node.country, node.x ,node.y);
   }
 
   let drawLink = (link, i) => {
-    console.log(link);
     let source = getNode(link.source);
     let target = getNode(link.target);
     ctx.beginPath();
@@ -96,43 +98,33 @@ if(document.getElementById("my-graf")) {
 
   canvas
     .call(d3.drag()
-      // .container(canvas.node())
       .subject(dragsubject)
       .on("start", dragstarted)
       .on("drag", dragged)
       .on("end", dragended))
-      .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed));
+      .on("dblclick", dbclick)
+    .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed))
+    .on("dblclick.zoom", null);
+
+
 
   // zoom
-
   function zoomed() {
-      // console.log("zooming")
-      transform = d3.event.transform;
-      update();
+    transform = d3.event.transform;
+    update();
+  }
+
+  function dbclick() {
+    const node = getSubject ();
+    if (!node) return;
+    const description = node.description;
+    if (description) {
+      modal.style.display = "block";
+      modalContent.innerHTML = '<h2>' + node.country + '</h2><p>' + node.description+ '</p>';
     }
+  }
 
-  // function dragsubject() {
-  //   var i,
-  //   x = transform.invertX(d3.event.x),
-  //   y = transform.invertY(d3.event.y),
-  //   dx,
-  //   dy;
-  //   for (i = graph.nodes.length - 1; i >= 0; --i) {
-  //     node = graph.nodes[i];
-  //     dx = x - node.x;
-  //     dy = y - node.y;
-  //     let radius = node.radius || settings.nodeRadius;
-  //     if (dx * dx + dy * dy < radius * radius) {
-  //       console.log(node)
-  //       node.x =  transform.applyX(node.x);
-  //       node.y = transform.applyY(node.y);
-  //       // update();
-  //       return node;
-  //     }
-  //   }
-  // }
-
-  function dragsubject() {
+  function getSubject () {
     var i,
     x = transform.invertX(d3.event.x),
     y = transform.invertY(d3.event.y),
@@ -145,37 +137,85 @@ if(document.getElementById("my-graf")) {
       let radius = node.radius || settings.nodeRadius;
       if (dx * dx + dy * dy < radius * radius) {
 
-        node.x =  transform.applyX(node.x);
-        node.y = transform.applyY(node.y);
-        console.log(node);
         return node;
       }
     }
   }
 
+  function dragsubject() {
+    let node = getSubject ();
+    if(node) {
+      node.x =  transform.applyX(node.x);
+      node.y = transform.applyY(node.y);
+      return node;
+    }
+    // var i,
+    // x = transform.invertX(d3.event.x),
+    // y = transform.invertY(d3.event.y),
+    // dx,
+    // dy;
+    // for (i = graph.nodes.length - 1; i >= 0; --i) {
+    //   node = graph.nodes[i];
+    //   dx = x - node.x;
+    //   dy = y - node.y;
+    //   let radius = node.radius || settings.nodeRadius;
+    //   if (dx * dx + dy * dy < radius * radius) {
+    //
+    //     node.x =  transform.applyX(node.x);
+    //     node.y = transform.applyY(node.y);
+    //     return node;
+    //   }
+    // }
+  }
+
 
   function dragstarted() {
-    // if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+    d3.event.subject.active = true;
     d3.event.subject.x = transform.invertX(d3.event.x);
     d3.event.subject.y = transform.invertY(d3.event.y);
   }
 
   function dragged() {
-    // console.log('transform.invertX(d3.event.x)', transform.invertX(d3.event.x))
-    // console.log('d3.event.x', d3.event.x)
-    // console.log('d3.event.subject', d3.event.subject.fx)
-    console.log('d3.event.subject', d3.event.subject)
-
     d3.event.subject.x = transform.invertX(d3.event.x);
     d3.event.subject.y = transform.invertY(d3.event.y);
     update();
   }
 
   function dragended() {
-    // if (!d3.event.active) simulation.alphaTarget(0);
     d3.event.subject.active = false;
-    // d3.event.subject.fx = null;
-    // d3.event.subject.fy = null;
   }
 
+
+
+  document.getElementById("savePosition").onclick = function(){
+    alert("nodes positions: " + JSON.stringify(graph.nodes));
+  }
+
+
+  // modal
+  // Get the modal
+  const modal = document.getElementById("myModal");
+  const modalContent = document.getElementById("modalContent");
+
+  // Get the button that opens the modal
+  var btn = document.getElementById("myBtn");
+
+  // Get the <span> element that closes the modal
+  var span = document.getElementsByClassName("close")[0];
+
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = function() {
+    closeModal();
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      closeModal()
+    }
+  }
+  function closeModal() {
+    modalContent.innerHTML = '';
+    modal.style.display = "none";
+  }
 }
