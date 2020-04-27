@@ -101,41 +101,7 @@ if(document.getElementById("my-graf")) {
     ctx.lineWidth = link.value;
     if (link.color) ctx.strokeStyle = link.color;
     ctx.stroke();
-    drawArrowhead(source, target, target.radius)
 
-  }
-
-  function drawArrowhead(from, to, radius, radius) {
-  	var x_center = to.x;
-  	var y_center = to.y;
-
-  	var angle;
-  	var x;
-  	var y;
-
-  	ctx.beginPath();
-
-  	angle = Math.atan2(to.y - from.y, to.x - from.x)
-  	x = radius * Math.cos(angle) + x_center;
-  	y = radius * Math.sin(angle) + y_center;
-
-  	ctx.moveTo(x, y);
-
-  	angle += (1.0/3.0) * (2 * Math.PI)
-  	x = radius * Math.cos(angle) + x_center;
-  	y = radius * Math.sin(angle) + y_center;
-
-  	ctx.lineTo(x, y);
-
-  	angle += (1.0/3.0) * (2 * Math.PI)
-  	x = radius *Math.cos(angle) + x_center;
-  	y = radius *Math.sin(angle) + y_center;
-
-  	ctx.lineTo(x, y);
-
-  	ctx.closePath();
-
-  	ctx.fill();
   }
 
   let getNode = (link) => graph.nodes.find(node=> node.country === link)
