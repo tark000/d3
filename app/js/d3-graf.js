@@ -89,6 +89,8 @@ if(document.getElementById("my-graf")) {
     ctx.beginPath();
     ctx.moveTo(source.x, source.y);
     ctx.lineTo(target.x, target.y);
+    ctx.lineWidth = link.value;
+    if (link.color) ctx.strokeStyle = link.color;
     ctx.stroke();
   }
 
