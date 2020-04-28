@@ -1,19 +1,133 @@
 if(document.getElementById("my-graf")) {
+  function findIntersect (origin, radius, otherLineEndPoint) {
+    var v = otherLineEndPoint.subtract(origin);
+    var lineLength = v.length();
+    if (lineLength === 0) throw new Error("Length has to be positive");
+    v = v.normalize();
+    return origin.add(v.multiplyScalar(radius));
+  }
+
+  function Vector (x, y) {
+    this.x = x || 0;
+    this.y = y || 0;
+  }
+
+  Vector.prototype.add = function (vector) {
+      return new Vector(this.x + vector.x, this.y + vector.y);
+  };
+
+  Vector.prototype.subtract = function (vector) {
+      return new Vector(this.x - vector.x, this.y - vector.y);
+  };
+
+  Vector.prototype.multiply = function (vector) {
+      return new Vector(this.x * vector.x, this.y * vector.y);
+  };
+
+  Vector.prototype.multiplyScalar = function (scalar) {
+      return new Vector(this.x * scalar, this.y * scalar);
+  };
+
+  Vector.prototype.divide = function (vector) {
+      return new Vector(this.x / vector.x, this.y / vector.y);
+  };
+
+  Vector.prototype.divideScalar = function (scalar) {
+      return new Vector(this.x / scalar, this.y / scalar);
+  };
+
+  Vector.prototype.length = function () {
+      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+  };
+
+  Vector.prototype.normalize = function () {
+      return this.divideScalar(this.length());
+  };
+
+
+  function Line(x1,y1,x2,y2){
+        this.x1=x1;
+        this.y1=y1;
+        this.x2=x2;
+        this.y2=y2;
+    }
+    Line.prototype.drawWithArrowheads=function(ctx, direction){
+
+        // arbitrary styling
+        // ctx.strokeStyle="blue";
+        // ctx.fillStyle="blue";
+        // ctx.lineWidth=1;
+
+        // draw the line
+        ctx.beginPath();
+        ctx.moveTo(this.x1,this.y1);
+        ctx.lineTo(this.x2,this.y2);
+        ctx.stroke();
+        if (direction === 'from') {
+          var startRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+          startRadians+=((this.x2>this.x1)?-90:90)*Math.PI/180;
+
+          this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
+        } else if (direction === 'to') {
+          var endRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+          endRadians+=((this.x2>this.x1)?90:-90)*Math.PI/180;
+          this.drawArrowhead(ctx,this.x2,this.y2,endRadians);
+        } else if (direction === 'from, to') {
+          // draw the starting arrowhead
+          var startRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+          startRadians+=((this.x2>this.x1)?-90:90)*Math.PI/180;
+          this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
+          // draw the ending arrowhead
+          var endRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+          endRadians+=((this.x2>this.x1)?90:-90)*Math.PI/180;
+          this.drawArrowhead(ctx,this.x2,this.y2, endRadians);
+        } else {
+        }
+
+        // // draw the starting arrowhead
+        // var startRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+        // startRadians+=((this.x2>this.x1)?-90:90)*Math.PI/180;
+        // this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
+        // // draw the ending arrowhead
+        // var endRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
+        // endRadians+=((this.x2>this.x1)?90:-90)*Math.PI/180;
+        // this.drawArrowhead(ctx,this.x2,this.y2,endRadians);
+
+
+    }
+    Line.prototype.drawArrowhead=function(ctx,x,y,radians){
+      radians = radians >= 3.14 ? 0.02 : radians;
+      radians = radians == 0 ? 3.14 : radians;
+      ctx.save();
+      ctx.beginPath();
+      ctx.translate(x,y);
+      ctx.rotate(radians);
+      ctx.moveTo(0,0);
+      ctx.lineTo(5,20);
+      ctx.lineTo(-5,20);
+      ctx.closePath();
+      ctx.restore();
+      ctx.fill();
+    }
+
+
+
   let settings = {
     canvasId: '#my-graf',
     canvasWidth: +document.querySelector('.graf-wrapper').offsetWidth,
     canvasHeight: +document.querySelector('.graf-wrapper').offsetHeight,
     canvasBackground: 'rgb(245, 255, 245)',
 
-    nodeColor: "#fff",
+    nodeColor: "#888",
     nodeBorder: "#000",
     nodeRadius: "50",
-    nodeBorderColor: "#aaa",
-    nodeBorderWidth: 2,
+    nodeBorderColor: "#000",
+    nodeBorderWidth: 3,
     nodeFont: "bold 12px serif",
     nodeFontColor: "black",
 
     linkColor: "#333",
+    linkValue: 3,
 
     // more info block
     infoX: 0,
@@ -21,8 +135,6 @@ if(document.getElementById("my-graf")) {
     infoColor: 'red',
     nodeinfoBorderWidth: 1,
     nodeinfoBackground: "#fff",
-
-
 
     modalWidth: 500,
     modalHeight: 200
@@ -39,15 +151,30 @@ if(document.getElementById("my-graf")) {
       { country: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", radius: 20, color: 'red', x: 1500, y: 400 },
     ],
     links: [
-      { source: "Canada", target: "Yemen", distance: 190, value: 1 },
-      { source: "Canada", target: "Solomon Islands", distance: 100, value: 1 },
-      { source: "Yemen", target: "Vietnam", distance: 180, value: 1 },
-      { source: "Yemen", target: "Brazil", distance: 160, value: 5 },
-      { source: "Canada", target: "Brazil", distance: 130, value: 3, color: 'blue' },
-      { source: "Vietnam", target: "Taiwan", distance: 100, value: 4, color: '#00ffff' },
-      { source: "Brazil", target: "Taiwan", distance: 300, value: 3, color: 'red' },
+      { source: "Canada", target: "Yemen", direction: 'from' },
+      { source: "Canada", target: "Solomon Islands", direction: 'to' },
+      { source: "Yemen", target: "Vietnam", direction: 'from, to' },
+      { source: "Yemen", target: "Brazil"},
+      { source: "Canada", target: "Brazil"},
+      { source: "Vietnam", target: "Taiwan", color: '#00ffff' },
+      { source: "Brazil", target: "Taiwan", value: 5, color: 'red' },
     ],
   }
+  // node properties
+  // country
+  // description
+  // width
+  // height
+  // radius
+  // x
+  // y
+  // type
+  // link properties
+  // source
+  // target
+  // direction
+  // color
+  // value
 
   let canvas = d3
     .select(settings.canvasId)
@@ -69,37 +196,36 @@ if(document.getElementById("my-graf")) {
     ctx.translate(transform.x, transform.y);
     ctx.scale(transform.k, transform.k);
 
+    graph.nodes.forEach(setNodeSize);
     // Draw the links
     graph.links.forEach(drawLink);
-      // Draw the nodes
+    // Draw the nodes
     graph.nodes.forEach(drawNode)
     ctx.restore();
   };
 
-  let drawNode = (node, i) => {
+  let setNodeSize = (node, i) => {
     let width = ctx.measureText(node.country).width;
     let height = ctx.measureText("w").width;
     let nodeRadius = node.radius || settings.nodeRadius;
     node.radius = nodeRadius < width/2 ? (width/2 + 15) : nodeRadius;
-    // console.log(node.country, nodeRadius, width/2, radius);
-    if (node.type === 'rectangle') {
-      ctx.beginPath();
-      ctx.rect(node.x - node.width/2, node.y - node.height/2, node.width, node.height);
-      ctx.fillStyle = node.color ? node.color : settings.nodeColor;
-      ctx.fill();
-      ctx.lineWidth = settings.nodeBorderWidth;
-      ctx.strokeStyle = settings.nodeBorderColor;
-      ctx.stroke();
-    } else {
+  }
 
-      ctx.beginPath();
+  let drawNode = (node, i) => {
+    let width = ctx.measureText(node.country).width;
+    let height = ctx.measureText("w").width;
+    // console.log(node.country, nodeRadius, width/2, radius);
+    ctx.beginPath();
+    ctx.lineWidth = settings.nodeBorderWidth;
+    ctx.fillStyle = node.color ? node.color : settings.nodeColor;
+    if (node.type === 'rectangle') {
+      ctx.rect(node.x - node.width/2, node.y - node.height/2, node.width, node.height);
+    } else {
       ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
-      ctx.fillStyle = node.color ? node.color:settings.nodeColor;
-      ctx.fill();
-      ctx.lineWidth = settings.nodeBorderWidth;
-      ctx.strokeStyle = settings.nodeBorderColor;
-      ctx.stroke();
     }
+    ctx.strokeStyle = settings.nodeBorderColor;
+    ctx.fill();
+    if (node.active) ctx.stroke();
 
     // add text
     ctx.font = settings.nodeFont;
@@ -125,11 +251,29 @@ if(document.getElementById("my-graf")) {
   let drawLink = (link, i) => {
     let source = getNode(link.source);
     let target = getNode(link.target);
+
+    let pointCenter1 = new Vector(source.x, source.y)
+    let pointCenter2 = new Vector(target.x, target.y)
+    let point1 = findIntersect(pointCenter1, source.radius || source.width, pointCenter2)
+    let point2 = findIntersect(pointCenter2, target.radius || target.width, pointCenter1)
     ctx.beginPath();
-    ctx.moveTo(source.x, source.y);
-    ctx.lineTo(target.x, target.y);
-    ctx.lineWidth = link.value;
+    // ctx.moveTo(point1.x, point1.y);
+    // ctx.lineTo(point2.x, point2.y);
+    let line=new Line(point1.x, point1.y,point2.x, point2.y);
+    // draw the line
+    ctx.lineWidth = link.value || settings.linkValue;
     if (link.color) ctx.strokeStyle = link.color;
+    line.drawWithArrowheads(ctx, link.direction);
+
+    // if (link.direction === 'from') {
+    //   drawLineWithArrows(source.x,source.y,target.x,target.y,5,8,true,false);
+    // } else if (link.direction === 'to') {
+    //   drawLineWithArrows(source.x,source.y,target.x,target.y,5,8,false,true);
+    // } else if (link.direction === 'from, to') {
+    //   drawLineWithArrows(source.x,source.y,target.x,target.y,5,8,true,false);
+    //
+    // } else {
+    // }
     ctx.stroke();
 
   }
@@ -145,8 +289,22 @@ if(document.getElementById("my-graf")) {
     const node = getSubject ();
     if (!node) return;
     if (node.description) {
+      resetActiveNode();
       showModal(node)
     }
+  }
+
+  let oneClick = () => {
+    resetActiveNode();
+    const node = getSubject();
+    if (node) {
+      node.active = true;
+    }
+    update();
+  }
+
+  let resetActiveNode = () => {
+    graph.nodes.forEach((node)=>node.active = false);
   }
 
   let showModal = (node) => {
@@ -220,6 +378,7 @@ if(document.getElementById("my-graf")) {
 
 
   let  dragstarted = () => {
+    resetActiveNode();
     d3.event.subject.active = true;
     d3.event.subject.x = transform.invertX(d3.event.x);
     d3.event.subject.y = transform.invertY(d3.event.y);
@@ -233,9 +392,46 @@ if(document.getElementById("my-graf")) {
 
   let dragended = () => {
     d3.event.subject.active = false;
+    // update();
   }
 
   update();
+
+
+
+
+  // x0,y0: the line's starting point
+  // x1,y1: the line's ending point
+  // width: the distance the arrowhead perpendicularly extends away from the line
+  // height: the distance the arrowhead extends backward from the endpoint
+  // arrowStart: true/false directing to draw arrowhead at the line's starting point
+  // arrowEnd: true/false directing to draw arrowhead at the line's ending point
+
+  // function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd){
+  //     var dx=x1-x0;
+  //     var dy=y1-y0;
+  //     var angle=Math.atan2(dy,dx);
+  //     var length=Math.sqrt(dx*dx+dy*dy);
+  //     //
+  //     ctx.translate(x0,y0);
+  //     ctx.rotate(angle);
+  //     ctx.beginPath();
+  //     ctx.moveTo(0,0);
+  //     ctx.lineTo(length,0);
+  //     if(arrowStart){
+  //         ctx.moveTo(aLength,-aWidth);
+  //         ctx.lineTo(0,0);
+  //         ctx.lineTo(aLength,aWidth);
+  //     }
+  //     if(arrowEnd){
+  //         ctx.moveTo(length-aLength,-aWidth);
+  //         ctx.lineTo(length,0);
+  //         ctx.lineTo(length-aLength,aWidth);
+  //     }
+  //     ctx.stroke();
+  //     ctx.setTransform(1,0,0,1,0,0);
+  // }
+
 
   canvas
     .call(d3.drag()
@@ -244,6 +440,7 @@ if(document.getElementById("my-graf")) {
       .on("drag", dragged)
       .on("end", dragended))
       .on("dblclick", dbclick)
+      .on("click", oneClick)
     .call(d3.zoom().scaleExtent([0.4, 8]).on("zoom", zoomed))
     .on("dblclick.zoom", null);
 
@@ -280,4 +477,8 @@ if(document.getElementById("my-graf")) {
     modalContent.innerHTML = '';
     modal.style.display = "none";
   }
+
+
+
+
 }
