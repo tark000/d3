@@ -64,11 +64,11 @@ if(document.getElementById("my-graf")) {
     endRadians+=((this.x2>this.x1)?90:-90)*Math.PI/180;
     console.log('endRadians', endRadians)
 
-    if (direction === 'from') {
+    if (direction === 'reverse') {
       this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
-    } else if (direction === 'to') {
+    } else if (direction === 'forward') {
       this.drawArrowhead(ctx,this.x2,this.y2,endRadians);
-    } else if (direction === 'from, to') {
+    } else if (direction === 'both') {
       // draw the starting arrowhead
       this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
       this.drawArrowhead(ctx,this.x2,this.y2, endRadians);
@@ -116,9 +116,11 @@ if(document.getElementById("my-graf")) {
     nodeBorderWidth: 3,
     nodeFont: "bold 14px Roboto",
     nodeFontColor: "black",
+    rectangleRadius: 5,
+    rectangleProportion: 0.75, // rectangle height = size * rectangleProportion
 
-    linkColor: "#333",
-    linkValue: 2,
+    edgeColor: "#333",
+    edgeValue: 2,
 
     // more info block
     infoX: 0,
@@ -128,30 +130,58 @@ if(document.getElementById("my-graf")) {
     nodeinfoBackground: "#fff",
 
     modalWidth: 500,
-    modalHeight: 200
+    modalHeight: 200,
+
+    size: {
+      small: 80,
+      medium: 140,
+      large: 200
+    },
+    edgeWeight: {
+      light: 1,
+      standard: 2,
+      heavy: 4,
+
+    }
+  }
+
+  let getSize = (node, property) => {
+    let value = settings.size[node.size];
+    if (property === 'radius') {
+      return value/2;
+    } else if (property === 'width') {
+      return value;
+    } else if (property === 'height') {
+      if (node.shape === 'rectangle') {
+        return value * settings.rectangleProportion;
+      } else {
+        return value;
+      }
+    }
   }
 
   let graph = {
     nodes: [
-      { country: "Canada", description: "Long text Canada <a href='/'>home page</a>" , width: 120, height: 70, x: 1000, y: 70, type: "rectangle"},
-      { country: "Yemen", description: "Long text Yemen <h2>some text</h2>", radius: 60, x: 242, y: 70 },
-      { country: "Solomon Islands", description: "Long text Solomon Islands <h2>some text</h2>", radius: 60 , x: 1345, y: 150},
-      { country: "Vietnam", description: "Long text Vietnam <h2>some text</h2>", radius: 60, x: 242, y: 424 },
-      { country: "Brazil", description: "Long text Brazil <h2>some text</h2>", radius: 60, x: 600, y: 250 },
-      { country: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", radius: 60, color: '#ccc', x: 1500, y: 424 },
+      {id:1, title: "Canada", description: "Long text Canada <a href='/'>home page</a>" , position_x:1000, position_y:70, x: 1000, y: 70, shape: 'rectangle', size: 'medium'},
+      {id:2, title: "Yemen", description: "Long text Yemen <h2>some text</h2>", position_x:1000, position_y:70, x: 242, y: 70, shape: 'circle', size: 'medium' },
+      {id:3, title: "Solomon Islands", description: "Long text Solomon Islands <h2>some text</h2>", position_x:1000, position_y:70, x: 1345, y: 150, shape: 'circle', size: 'medium'},
+      {id:4, title: "Vietnam", description: "Long text Vietnam <h2>some text</h2>", position_x:1000, position_y:70, x: 242, y: 424, shape: 'circle', size: 'medium' },
+      {id:5, title: "Brazil", description: "Long text Brazil <h2>some text</h2>", position_x:1000, position_y:70, x: 600, y: 250, shape: 'circle', size: 'medium' },
+      {id:6, title: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", color: '#ccc', position_x:1000, position_y:70, x: 1500, y: 424, shape: 'circle', size: 'medium' },
     ],
-    links: [
-      { source: "Canada", target: "Yemen", direction: 'from' },
-      { source: "Canada", target: "Solomon Islands", direction: 'to' },
-      { source: "Yemen", target: "Vietnam", direction: 'from, to' },
-      { source: "Yemen", target: "Brazil"},
-      { source: "Canada", target: "Brazil"},
-      { source: "Vietnam", target: "Taiwan" },
-      { source: "Brazil", target: "Taiwan"},
+    edges: [
+      { from: 1, to: 2, direction: 'forward', weight: 'standard'},
+      { from: 1, to: 3, direction: 'reverse', weight: 'standard'},
+      { from: 2, to: 4, direction: 'both', weight: 'standard'},
+      { from: 2, to: 5, direction: 'none', weight: 'standard'},
+      { from: 1, to: 5, direction: 'none', weight: 'standard'},
+      { from: 4, to: 6, direction: 'none', weight: 'standard'},
+      { from: 5, to: 6, direction: 'none', weight: 'standard'},
     ],
   }
+  console.log(getSize(graph.nodes[0], 'width'), getSize(graph.nodes[0], 'height'), getSize(graph.nodes[0], 'radius'));
   // node properties
-  // country
+  // title
   // description
   // width
   // height
@@ -159,7 +189,7 @@ if(document.getElementById("my-graf")) {
   // x
   // y
   // type
-  // link properties
+  // edge properties
   // source
   // target
   // direction
@@ -185,46 +215,38 @@ if(document.getElementById("my-graf")) {
     ctx.translate(transform.x, transform.y);
     ctx.scale(transform.k, transform.k);
 
-    graph.nodes.forEach(setNodeSize);
-    // Draw the links
-    graph.links.forEach(drawLink);
+    // Draw the edges
+    graph.edges.forEach(drawEdge);
     // Draw the nodes
     graph.nodes.forEach(drawNode)
     ctx.restore();
   };
 
-  let setNodeSize = (node, i) => {
-    let width = ctx.measureText(node.country).width;
-    let height = ctx.measureText("w").width;
-    let nodeRadius = node.radius || node.width/2 || settings.nodeRadius;
-    node.radius = nodeRadius < width/2 ? (width/2 + 15) : nodeRadius;
-  }
-
   let addHtmlNodesContent = (node) => {
-    let contentWidth = node.radius * 2 || node.width;
+    let contentWidth = getSize(node, 'width');
     let x = transform.applyX(node.x);
     let y = transform.applyY(node.y);
-    document.getElementById("nodesContent").innerHTML += '<div class="node-content" draggable="true" data-node="' + node.country + '" style="top: ' + y + 'px; left: ' + (x - contentWidth/2) + 'px; width: ' + contentWidth + 'px;"><span>' + node.country + '</span></div>';
+    document.getElementById("nodesContent").innerHTML += '<div class="node-content" draggable="true" data-node="' + node.id + '" style="top: ' + y + 'px; left: ' + (x - contentWidth/2) + 'px; width: ' + contentWidth + 'px;"><span>' + node.title + '</span></div>';
   }
   let isMove = false;
   let addMouseListener = () => {
-    document.querySelectorAll('.node-content').forEach((element)=>{
-      element.addEventListener('mousedown', function(event) {
-        console.log('mousedown')
-        let node = getNode(event.currentTarget.dataset.node);
-        resetActiveNode();
-        node.active = true;
-        isMove = true;
-        update();
-      })
-      element.addEventListener('mouseup', e => {
-        if (isMove === true) {
-          console.log('mouseup')
-          isMove = false;
-        }
-      });
-
-    })
+    // document.querySelectorAll('.node-content').forEach((element)=>{
+    //   element.addEventListener('mousedown', function(event) {
+    //     console.log('mousedown')
+    //     let node = getNode(event.currentTarget.dataset.node);
+    //     resetActiveNode();
+    //     node.active = true;
+    //     isMove = true;
+    //     update();
+    //   })
+    //   element.addEventListener('mouseup', e => {
+    //     if (isMove === true) {
+    //       console.log('mouseup')
+    //       isMove = false;
+    //     }
+    //   });
+    //
+    // })
   };
   // window.addEventListener('mousedown', e => {
   //   if (isMove === true) {
@@ -244,19 +266,19 @@ if(document.getElementById("my-graf")) {
   //     }
   //   }
   // })
-  window.addEventListener('mousemove', e => {
-  // document.querySelector(settings.canvasId).addEventListener('mousemove', e => {
-    // console.log(e.x,e.y, e)
-    if (isMove === true) {
-      let node = getActiveNode();
-      if (node && e.target.id == "my-graf") {
-        // console.log(e.offsetX,e.offsetY)
-        node.x = transform.invertX(e.x);
-        node.y = transform.invertY(e.y);
-        update();
-      }
-    }
-  });
+  // window.addEventListener('mousemove', e => {
+  // // document.querySelector(settings.canvasId).addEventListener('mousemove', e => {
+  //   // console.log(e.x,e.y, e)
+  //   if (isMove === true) {
+  //     let node = getActiveNode();
+  //     if (node && e.target.id == "my-graf") {
+  //       // console.log(e.offsetX,e.offsetY)
+  //       node.x = transform.invertX(e.x);
+  //       node.y = transform.invertY(e.y);
+  //       update();
+  //     }
+  //   }
+  // });
   // window.addEventListener('mouseup', e => {
   //   if (isMove === true) {
   //     console.log('mouseup')
@@ -266,29 +288,29 @@ if(document.getElementById("my-graf")) {
 
 
   let drawNode = (node, i) => {
-    let width = ctx.measureText(node.country).width;
+    let width = ctx.measureText(node.title).width;
     let height = ctx.measureText("w").width;
-    // console.log(node.country, nodeRadius, width/2, radius);
+    // console.log(node.title, nodeRadius, width/2, radius);
     ctx.beginPath();
     ctx.lineWidth = settings.nodeBorderWidth;
     ctx.fillStyle = node.color ? node.color : settings.nodeColor;
     if (node.type === 'rectangle') {
-      // ctx.rect(node.x - node.width/2, node.y - node.height/2, node.width, node.height);
-      ctx.roundRect(node.x - node.width/2, node.y - node.height/2, node.width, node.height, 7);
+      // ctx.rect(node.x - getSize(node, 'radius'), node.y - getSize(node, 'height')/2, getSize(node, 'width'), getSize(node, 'height'));
+      ctx.roundRect(node.x - getSize(node, 'radius'), node.y - getSize(node, 'height')/2, getSize(node, 'width'), getSize(node, 'height'), settings.rectangleRadius);
     } else {
-      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI, true);
+      ctx.arc(node.x, node.y, getSize(node, 'radius'), 0, 2 * Math.PI, true);
     }
     ctx.strokeStyle = settings.nodeBorderColor;
     ctx.fill();
     if (node.active) ctx.stroke();
 
     // add text
-    // ctx.font = settings.nodeFont;
-    // ctx.fillStyle = settings.nodeFontColor;
-    // ctx.textAlign = "center";
-    // ctx.fillText(node.country, node.x ,node.y);
-    addHtmlNodesContent(node);
-    addMouseListener();
+    ctx.font = settings.nodeFont;
+    ctx.fillStyle = settings.nodeFontColor;
+    ctx.textAlign = "center";
+    ctx.fillText(node.title, node.x ,node.y);
+    // addHtmlNodesContent(node);
+    // addMouseListener();
 
     // add more info
     ctx.beginPath();
@@ -305,27 +327,27 @@ if(document.getElementById("my-graf")) {
     ctx.fillText('i', node.x + settings.infoX , node.y + settings.infoY + height/2);
   }
 
-  let drawLink = (link, i) => {
-    let source = getNode(link.source);
-    let target = getNode(link.target);
+  let drawEdge = (edge, i) => {
+    let source = getNode(edge.from);
+    let target = getNode(edge.to);
 
     let pointCenter1 = new Vector(source.x, source.y)
     let pointCenter2 = new Vector(target.x, target.y)
-    let point1 = findIntersect(pointCenter1, source.radius || source.width, pointCenter2)
-    let point2 = findIntersect(pointCenter2, target.radius || target.width, pointCenter1)
+    let point1 = findIntersect(pointCenter1, getSize(source, 'radius'), pointCenter2)
+    let point2 = findIntersect(pointCenter2, getSize(target, 'radius'), pointCenter1)
     ctx.beginPath();
     // ctx.moveTo(point1.x, point1.y);
     // ctx.lineTo(point2.x, point2.y);
     let line=new Line(point1.x, point1.y,point2.x, point2.y);
     // draw the line
-    ctx.lineWidth = link.value || settings.linkValue;
-    if (link.color) ctx.strokeStyle = link.color;
-    line.drawWithArrowheads(ctx, link.direction);
+    ctx.lineWidth = settings.edgeWeight[edge.weight];
+    if (edge.color) ctx.strokeStyle = edge.color;
+    line.drawWithArrowheads(ctx, edge.direction);
     ctx.stroke();
 
   }
 
-  let getNode = (value) => graph.nodes.find(node=> node.country === value)
+  let getNode = (value) => graph.nodes.find(node=> node.id === value)
   let getActiveNode = (value) => graph.nodes.find(node=> node.active === true)
   // zoom
   let zoomed = () => {
@@ -366,7 +388,7 @@ if(document.getElementById("my-graf")) {
     content.style.top = top + 'px';
     content.style.width = settings.modalWidth + 'px';
     content.style.height = settings.modalHeight + 'px';
-    modalContent.innerHTML = '<h2>' + node.country + '</h2><p>' + node.description+ '</p>';
+    modalContent.innerHTML = '<h2>' + node.title + '</h2><p>' + node.description+ '</p>';
   }
 
   let getSubject = () => {
@@ -385,13 +407,13 @@ if(document.getElementById("my-graf")) {
         showModal(node)
         return false;
       }
-      if (node.type == "rectangle") {
-        if (dx * dx < node.width/2 * node.width/2 && dy * dy < node.height/2 * node.height/2 ) {
+      if (node.shape == "rectangle") {
+        if (dx * dx < getSize(node, 'radius') * getSize(node, 'radius') && dy * dy < getSize(node, 'height')/2 * getSize(node, 'height')/2 ) {
           return node;
         }
       }
       else  {
-        if ((dx * dx + dy * dy < node.radius * node.radius)) {
+        if ((dx * dx + dy * dy < getSize(node, 'radius') * getSize(node, 'radius'))) {
           return node;
         }
       }
