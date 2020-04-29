@@ -131,9 +131,9 @@ if(document.getElementById("my-graf")) {
     modalHeight: 200,
 
     size: {
-      small: 80,
-      medium: 140,
-      large: 200
+      small: 70,
+      medium: 120,
+      large: 170
     },
     edgeWeight: {
       light: 1,
@@ -203,10 +203,12 @@ if(document.getElementById("my-graf")) {
   let ctx = canvas.node().getContext('2d');
   let scaleColor = d3.scaleOrdinal(d3.schemeCategory10);
   let transform = d3.zoomIdentity;
+  let getNode = (value) => graph.nodes.find(node=> node.id == value)
+  let getActiveNode = (value) => graph.nodes.find(node=> node.active === true)
 
   let update = () => {
     // console.log('update');
-    document.getElementById("nodesContent").innerHTML = '';
+    // document.getElementById("nodesContent").innerHTML = '';
     ctx.save();
 
     ctx.clearRect(0, 0, settings.canvasWidth, settings.canvasHeight);
@@ -219,6 +221,13 @@ if(document.getElementById("my-graf")) {
     graph.nodes.forEach(drawNode)
     ctx.restore();
   };
+  let updateContentPosition = (node) => {
+    let contentWidth = getSize(node, 'width');
+    let x = transform.applyX(node.x);
+    let y = transform.applyY(node.y);
+    document.querySelector('.node-content[data-node="' + node.id + '"]').style.left = x - contentWidth/2 + 'px';
+    document.querySelector('.node-content[data-node="' + node.id + '"]').style.top = y + 'px';
+  }
 
   let addHtmlNodesContent = (node) => {
     let contentWidth = getSize(node, 'width');
@@ -228,23 +237,72 @@ if(document.getElementById("my-graf")) {
   }
   let isMove = false;
   let addMouseListener = () => {
-    // document.querySelectorAll('.node-content').forEach((element)=>{
-    //   element.addEventListener('mousedown', function(event) {
-    //     console.log('mousedown')
-    //     let node = getNode(event.currentTarget.dataset.node);
-    //     resetActiveNode();
-    //     node.active = true;
-    //     isMove = true;
-    //     update();
-    //   })
-    //   element.addEventListener('mouseup', e => {
-    //     if (isMove === true) {
-    //       console.log('mouseup')
-    //       isMove = false;
-    //     }
-    //   });
-    //
-    // })
+    document.querySelectorAll('.node-content').forEach((element)=>{
+      dragElement(element);
+
+      function dragElement(elmnt) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        if (document.getElementById(elmnt.id + "header")) {
+          /* if present, the header is where you move the DIV from:*/
+          document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+        } else {
+          /* otherwise, move the DIV from anywhere inside the DIV:*/
+          elmnt.onmousedown = dragMouseDown;
+        }
+
+        function dragMouseDown(e) {
+          e = e || window.event;
+          e.preventDefault();
+          // get the mouse cursor position at startup:
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+          document.onmouseup = closeDragElement;
+          // call a function whenever the cursor moves:
+          document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+
+          e = e || window.event;
+          e.preventDefault();
+          let node = getNode(elmnt.dataset.node);
+
+          // calculate the new cursor position:
+          pos1 = pos3 - node.x;
+          pos2 = pos4 - node.y;
+          pos3 = transform.applyX(e.clientX);
+          pos4 = transform.applyY(e.clientY);
+          // set the element's new position:
+          node.x = transform.applyX(e.clientX - pos1);
+          node.y = transform.applyY(e.clientY - pos2);
+          resetActiveNode();
+          node.active = true;
+          update();
+        }
+
+        function closeDragElement() {
+          /* stop moving when mouse button is released:*/
+          document.onmouseup = null;
+          document.onmousemove = null;
+        }
+      }
+
+      // element.addEventListener('mousedown', function(event) {
+      //   console.log('mousedown')
+      //   let node = getNode(event.currentTarget.dataset.node);
+      //   resetActiveNode();
+      //   node.active = true;
+      //   isMove = true;
+      //   update();
+      // })
+      // element.addEventListener('mouseup', e => {
+      //   if (isMove === true) {
+      //     console.log('mouseup')
+      //     isMove = false;
+      //   }
+      // });
+
+    })
   };
   // window.addEventListener('mousedown', e => {
   //   if (isMove === true) {
@@ -283,7 +341,8 @@ if(document.getElementById("my-graf")) {
   //     isMove = false;
   //   }
   // });
-
+  graph.nodes.forEach(addHtmlNodesContent);
+  addMouseListener();
 
   let drawNode = (node, i) => {
     let width = ctx.measureText(node.title).width;
@@ -292,7 +351,7 @@ if(document.getElementById("my-graf")) {
     ctx.beginPath();
     ctx.lineWidth = settings.nodeBorderWidth;
     ctx.fillStyle = node.color ? node.color : settings.nodeColor;
-    if (node.type === 'rectangle') {
+    if (node.shape === 'rectangle') {
       // ctx.rect(node.x - getSize(node, 'radius'), node.y - getSize(node, 'height')/2, getSize(node, 'width'), getSize(node, 'height'));
       ctx.roundRect(node.x - getSize(node, 'radius'), node.y - getSize(node, 'height')/2, getSize(node, 'width'), getSize(node, 'height'), settings.rectangleRadius);
     } else {
@@ -303,12 +362,11 @@ if(document.getElementById("my-graf")) {
     if (node.active) ctx.stroke();
 
     // add text
-    ctx.font = settings.nodeFont;
-    ctx.fillStyle = settings.nodeFontColor;
-    ctx.textAlign = "center";
-    ctx.fillText(node.title, node.x ,node.y);
-    // addHtmlNodesContent(node);
-    // addMouseListener();
+    // ctx.font = settings.nodeFont;
+    // ctx.fillStyle = settings.nodeFontColor;
+    // ctx.textAlign = "center";
+    // ctx.fillText(node.title, node.x ,node.y);
+    updateContentPosition(node);
 
     // add more info
     ctx.beginPath();
@@ -345,8 +403,7 @@ if(document.getElementById("my-graf")) {
 
   }
 
-  let getNode = (value) => graph.nodes.find(node=> node.id === value)
-  let getActiveNode = (value) => graph.nodes.find(node=> node.active === true)
+
   // zoom
   let zoomed = () => {
     transform = d3.event.transform;
@@ -421,10 +478,8 @@ if(document.getElementById("my-graf")) {
   let dragsubject = ()=> {
     let node = getSubject();
     if(node) {
-      console.log(node)
       node.x =  transform.applyX(node.x);
       node.y = transform.applyY(node.y);
-      console.log(node)
       return node;
     }
   }
