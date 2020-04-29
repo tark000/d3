@@ -59,10 +59,8 @@ if(document.getElementById("my-graf")) {
     ctx.stroke();
     var startRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
     startRadians+=((this.x2>this.x1)?-90:90)*Math.PI/180;
-    console.log('startRadians', startRadians)
     var endRadians=Math.atan((this.y2-this.y1)/(this.x2-this.x1));
     endRadians+=((this.x2>this.x1)?90:-90)*Math.PI/180;
-    console.log('endRadians', endRadians)
 
     if (direction === 'reverse') {
       this.drawArrowhead(ctx,this.x1,this.y1,startRadians);
@@ -162,12 +160,12 @@ if(document.getElementById("my-graf")) {
 
   let graph = {
     nodes: [
-      {id:1, title: "Canada", description: "Long text Canada <a href='/'>home page</a>" , position_x:1000, position_y:70, x: 1000, y: 70, shape: 'rectangle', size: 'medium'},
-      {id:2, title: "Yemen", description: "Long text Yemen <h2>some text</h2>", position_x:1000, position_y:70, x: 242, y: 70, shape: 'circle', size: 'medium' },
-      {id:3, title: "Solomon Islands", description: "Long text Solomon Islands <h2>some text</h2>", position_x:1000, position_y:70, x: 1345, y: 150, shape: 'circle', size: 'medium'},
-      {id:4, title: "Vietnam", description: "Long text Vietnam <h2>some text</h2>", position_x:1000, position_y:70, x: 242, y: 424, shape: 'circle', size: 'medium' },
-      {id:5, title: "Brazil", description: "Long text Brazil <h2>some text</h2>", position_x:1000, position_y:70, x: 600, y: 250, shape: 'circle', size: 'medium' },
-      {id:6, title: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", color: '#ccc', position_x:1000, position_y:70, x: 1500, y: 424, shape: 'circle', size: 'medium' },
+      {id:1, title: "Canada", description: "Long text Canada <a href='/'>home page</a>" , x:1000, y:70, shape: 'rectangle', size: 'medium'},
+      {id:2, title: "Yemen", description: "Long text Yemen <h2>some text</h2>", x:242, y:70, shape: 'circle', size: 'medium' },
+      {id:3, title: "Solomon Islands", description: "Long text Solomon Islands <h2>some text</h2>", x:1345, y:70, shape: 'circle', size: 'medium'},
+      {id:4, title: "Vietnam", description: "Long text Vietnam <h2>some text</h2>", x:242, y:424, shape: 'circle', size: 'medium' },
+      {id:5, title: "Brazil", description: "Long text Brazil <h2>some text</h2>", x:600, y:250, shape: 'circle', size: 'medium' },
+      {id:6, title: "Taiwan", description: "Long text Taiwan <h2>some text</h2>", color: '#ccc', x:1500, y:424, shape: 'circle', size: 'medium' },
     ],
     edges: [
       { from: 1, to: 2, direction: 'forward', weight: 'standard'},
@@ -421,10 +419,12 @@ if(document.getElementById("my-graf")) {
   }
 
   let dragsubject = ()=> {
-    let node = getSubject ();
+    let node = getSubject();
     if(node) {
+      console.log(node)
       node.x =  transform.applyX(node.x);
       node.y = transform.applyY(node.y);
+      console.log(node)
       return node;
     }
   }
